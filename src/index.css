@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add CSS for the marquee animation */
+@layer utilities {
+  @keyframes marquee {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-100%); }
+  }
+
+  .animate-marquee {
+    animation: marquee 40s linear infinite; /* Adjust duration (40s) as needed */
+  }
+
+  /* Pause animation on hover - Targeting the container */
+  .marquee-container:hover .animate-marquee {
+    animation-play-state: paused;
+  }
+}
