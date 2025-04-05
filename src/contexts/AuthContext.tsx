@@ -114,16 +114,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const result = await signInWithPopup(auth, provider);
       await ensureUserRole(result.user.uid, result.user.email, intendedRole);
-    } catch (error: any) {
-       if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
+    } catch (error: unknown) {
+       let errorCode: string | undefined;
+       if (typeof error === 'object' && error !== null && 'code' in error) {
+         errorCode = (error as {code: string}).code;
+       }
+
+       if (errorCode === 'auth/popup-blocked' || errorCode === 'auth/cancelled-popup-request') {
          try {
            await signInWithRedirect(auth, provider);
-         } catch (redirectError: any) {
+         } catch (redirectError: unknown) {
            console.error("Google redirect error:", redirectError);
            setError('Failed to sign in with Google. Please try again.');
            setLoading(false);
          }
-       } else if (error.code !== 'auth/popup-closed-by-user'){
+       } else if (errorCode !== 'auth/popup-closed-by-user'){
          console.error("Google popup error:", error);
          setError('Failed to sign in with Google. Please try again.');
          setLoading(false);
@@ -139,14 +144,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const userCredential = await firebaseSignInWithEmailAndPassword(auth, email, password);
       await ensureUserRole(userCredential.user.uid, userCredential.user.email, intendedRole);
-    } catch (error: any) {
+    } catch (error: unknown) {
        console.error("Email Sign In error:", error);
        let message = 'Failed to sign in. Please try again later.';
        
-       if (error.code === 'auth/invalid-credential') {
-           message = 'Login failed. User not found or password incorrect. Need an account? Try Signing Up.';
-       } else if (error.code === 'auth/user-disabled') {
-           message = 'This account has been disabled.';
+       if (typeof error === 'object' && error !== null && 'code' in error) {
+         const errorCode = (error as {code: string}).code;
+         if (errorCode === 'auth/invalid-credential') {
+             message = 'Login failed. User not found or password incorrect. Need an account? Try Signing Up.';
+         } else if (errorCode === 'auth/user-disabled') {
+             message = 'This account has been disabled.';
+         }
        }
        
        setError(message);
@@ -160,15 +168,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await ensureUserRole(userCredential.user.uid, userCredential.user.email, intendedRole);
-    } catch (error: any) {
+    } catch (error: unknown) {
        console.error("Email Sign Up error:", error);
        let message = 'Failed to sign up. Please try again.';
-       if (error.code === 'auth/email-already-in-use') {
-         message = 'This email address is already in use.';
-       } else if (error.code === 'auth/weak-password') {
-         message = 'Password is too weak. Please choose a stronger password (at least 6 characters).';
-       } else if (error.code === 'auth/invalid-email') {
-         message = 'Please enter a valid email address.';
+
+       if (typeof error === 'object' && error !== null && 'code' in error) {
+         const errorCode = (error as {code: string}).code;
+         if (errorCode === 'auth/email-already-in-use') {
+           message = 'This email address is already in use.';
+         } else if (errorCode === 'auth/weak-password') {
+           message = 'Password is too weak. Please choose a stronger password (at least 6 characters).';
+         } else if (errorCode === 'auth/invalid-email') {
+           message = 'Please enter a valid email address.';
+         }
        }
        setError(message);
        setLoading(false);
@@ -182,7 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await firebaseSignOut(auth);
       setUser(null);
       setUserRoleState(null);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Sign out error:", error);
       setError('Failed to sign out.');
     }

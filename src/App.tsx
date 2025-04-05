@@ -48,11 +48,17 @@ const AppContent = () => {
       {/* Public Routes only accessible when logged out */}
       <Route 
         path="/" 
-        element={!user ? <Layout><HomePage /></Layout> : <Navigate to={`/${userRole}/dashboard`} replace />}
+        element={
+          !user ? <Layout><HomePage /></Layout> : 
+          (userRole ? <Navigate to={`/${userRole}/dashboard`} replace /> : <LoadingSpinner />)
+        }
       />
       <Route 
         path="/blog/:slug" 
-        element={!user ? <Layout><BlogPost /></Layout> : <Navigate to={`/${userRole}/dashboard`} replace />}
+        element={
+          !user ? <Layout><BlogPost /></Layout> : 
+          (userRole ? <Navigate to={`/${userRole}/dashboard`} replace /> : <LoadingSpinner />)
+        }
       />
 
       {/* Protected Dashboard Routes */}
@@ -74,8 +80,14 @@ const AppContent = () => {
       />
 
       {/* Fallback Route */}
-      {/* If logged in but role not determined yet (shouldn't happen with new logic, but safe fallback) or invalid path */}
-      <Route path="*" element={<Navigate to={user && userRole ? `/${userRole}/dashboard` : "/"} replace />} />
+      {/* If logged in but role not determined yet or invalid path */}
+      <Route 
+        path="*" 
+        element={
+          user && userRole ? <Navigate to={`/${userRole}/dashboard`} replace /> :
+          (user && !userRole ? <LoadingSpinner /> : <Navigate to="/" replace />)
+        } 
+      />
     </Routes>
   );
 };
